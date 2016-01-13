@@ -2,28 +2,34 @@
 #if !defined LIBFACE_BENDERRMQ_HPP
 #define LIBFACE_BENDERRMQ_HPP
 
+#ifdef USE_USTL
+#include <ustl.h>
+namespace nw=ustl;
+#else
 #include <iostream>
 #include <vector>
 #include <utility>
 #include <algorithm>
 #include <stack>
-#include <stdio.h>
 #include <sstream>
+namespace nw=std;
+#endif // USE_USTL
+
+#include <stdio.h>
 #include <assert.h>
 
 #include <include/types.hpp>
 #include <include/utils.hpp>
 #include <include/sparsetable.hpp>
 
-using namespace std;
 
 #define MIN_SIZE_FOR_BENDER_RMQ 16
 
-std::string
+nw::string
 bitmap_str(uint_t i) {
-    std::string out;
+    nw::string out;
     for (int x = 17; x >= 0; --x) {
-	out += '0' + ((i & (1L << x)) ? 1 : 0);
+	out += char('0' + ((i & (1L << x)) ? 1 : 0));
     }
     return out;
 }
@@ -76,14 +82,14 @@ public:
  * at node n
  */
 void
-euler_tour(BinaryTreeNode *n, 
+euler_tour(BinaryTreeNode *n,
 	   vui_t &output, /* Where the output is written. Should be empty */
 	   vui_t &levels, /* Where the level for each node is written. Should be empty */
 	   vui_t &mapping /* mapping stores representative
                              indexes which maps from the original index to the index
-                             into the euler tour array, which is a +- RMQ */, 
+                             into the euler tour array, which is a +- RMQ */,
 	   vui_t &rev_mapping /* Reverse mapping to go from +-RMQ
-				 indexes to user provided indexes */, 
+				 indexes to user provided indexes */,
 	   int level = 1) {
     DPRINTF("euler_tour(%d, %d)\n", n?n->data:-1, n?n->index:-1);
     if (!n) {
@@ -116,7 +122,7 @@ euler_tour(BinaryTreeNode *n,
 BinaryTreeNode*
 make_cartesian_tree(vui_t const &input, SimpleFixedObjectAllocator<BinaryTreeNode> &alloc) {
     BinaryTreeNode *curr = NULL;
-    std::stack<BinaryTreeNode*> stk;
+    nw::stack<BinaryTreeNode*> stk;
 
     if (input.empty()) {
 	return NULL;
@@ -142,7 +148,7 @@ make_cartesian_tree(vui_t const &input, SimpleFixedObjectAllocator<BinaryTreeNod
 		while (!stk.empty() && stk.top()->data < input[i]) {
 		    prev = top;
 		    top = stk.top();
-		    DPRINTF("[1] popping & setting (%d, %d)->right = (%d, %d)\n", top->data, top->index, 
+		    DPRINTF("[1] popping & setting (%d, %d)->right = (%d, %d)\n", top->data, top->index,
 			    prev?prev->data:-1, prev?prev->index:-1);
 		    top->right = prev;
 		    stk.pop();
@@ -161,7 +167,7 @@ make_cartesian_tree(vui_t const &input, SimpleFixedObjectAllocator<BinaryTreeNod
     while (!stk.empty()) {
 	prev = top;
 	top = stk.top();
-	DPRINTF("[2] popping & setting (%d, %d)->right = (%d, %d)\n", top->data, top->index, 
+	DPRINTF("[2] popping & setting (%d, %d)->right = (%d, %d)\n", top->data, top->index,
 		prev?prev->data:-1, prev?prev->index:-1);
 	top->right = prev;
 	stk.pop();
@@ -171,13 +177,13 @@ make_cartesian_tree(vui_t const &input, SimpleFixedObjectAllocator<BinaryTreeNod
     return top;
 }
 
-std::string
+nw::string
 toGraphViz(BinaryTreeNode* par, BinaryTreeNode *n) {
     if (!n) {
 	return "";
     }
 
-    std::ostringstream sout;
+    nw::ostringstream sout;
 
     if (par) {
 	sout<<'"'<<par->data<<"_"<<par->index<<"\" -> \""<<n->data<<"_"<<n->index<<"\"\n";
@@ -199,7 +205,7 @@ public:
     void initialize(int nbits) {
 	int ntables = 1 << nbits;
 	repr.resize(ntables);
-	std::vector<int> tmp(nbits);
+	nw::vector<int> tmp(nbits);
 
 	for (int i = 0; i < ntables; ++i) {
 	    const int start = 40;
@@ -382,7 +388,7 @@ public:
 
 		const uint_t bit = (curr_level < prev_level);
 		bitmap |= (bit << j);
-		max_in_block = std::max(max_in_block, value);
+		max_in_block = nw::max(max_in_block, value);
 		DPRINTF("%u, ", value);
 	    }
 	    DPRINTF("), Bitmap: %s\n", bitmap_str(bitmap).c_str());
@@ -400,7 +406,7 @@ public:
     pui_t
     query_max(uint_t qf, uint_t ql) {
         if (qf >= this->len || ql >= this->len || ql < qf) {
-            return make_pair(minus_one, minus_one);
+            return nw::make_pair(minus_one, minus_one);
         }
 
 	if (len < MIN_SIZE_FOR_BENDER_RMQ) {
@@ -414,7 +420,7 @@ public:
 	DPRINTF("[2] (qf, ql) = (%d, %d)\n", qf, ql);
 
 	if (qf > ql) {
-	    std::swap(qf, ql);
+	    nw::swap(qf, ql);
 	    DPRINTF("[3] (qf, ql) = (%d, %d)\n", qf, ql);
 	}
 
@@ -422,7 +428,7 @@ public:
 	const uint_t first_block_index = qf / lgn_by_2;
 	const uint_t last_block_index = ql / lgn_by_2;
 
-	DPRINTF("first_block_index: %u, last_block_index: %u\n", 
+	DPRINTF("first_block_index: %u, last_block_index: %u\n",
 		first_block_index, last_block_index);
 
 	pui_t ret(0, 0);
@@ -460,7 +466,7 @@ public:
 	    qf %= lgn_by_2;
 	    ql %= lgn_by_2;
 	    const uint_t imax = lt.query_max(bitmapx, qf, ql) + first_block_index*lgn_by_2;
-	    ret = make_pair(euler[imax], rev_mapping[imax]);
+	    ret = nw::make_pair(euler[imax], rev_mapping[imax]);
 	    return ret;
 	}
 
@@ -492,16 +498,16 @@ public:
 	    if (ret.first > euler[max1i] && ret.first > euler[max2i]) {
 		ret.second = rev_mapping[ret.second];
 	    } else if (euler[max1i] >= ret.first && euler[max1i] >= euler[max2i]) {
-		ret = make_pair(euler[max1i], rev_mapping[max1i]);
+		ret = nw::make_pair(euler[max1i], rev_mapping[max1i]);
 	    } else if (euler[max2i] >= ret.first && euler[max2i] >= euler[max1i]) {
-		ret = make_pair(euler[max2i], rev_mapping[max2i]);
+		ret = nw::make_pair(euler[max2i], rev_mapping[max2i]);
 	    }
 	} else {
 	    // 2-way max
 	    if (euler[max1i] > euler[max2i]) {
-		ret = make_pair(euler[max1i], rev_mapping[max1i]);
+		ret = nw::make_pair(euler[max1i], rev_mapping[max1i]);
 	    } else {
-		ret = make_pair(euler[max2i], rev_mapping[max2i]);
+		ret = nw::make_pair(euler[max2i], rev_mapping[max2i]);
 	    }
 	}
 

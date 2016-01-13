@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
- 
+
 /* for ASCII only */
 static char code[128] = { 0 };
 void add_code(const char *s, int c)
@@ -14,7 +14,7 @@ void add_code(const char *s, int c)
         s++;
     }
 }
- 
+
 void init()
 {
     static const char *cls[] =
@@ -34,7 +34,7 @@ c_soundex(const char *s, char *out, int oc)
     if (!s || !*s) return out;
 
     out[0] = *s++;
- 
+
     /* first letter, though not coded, can still affect next letter: Pfister */
     // prev = code[(int)out[0]];
     // cerr<<"code[(int)out[0]]: "<<(int)code[(int)out[0]]<<endl;
@@ -52,10 +52,10 @@ c_soundex(const char *s, char *out, int oc)
     return out;
 }
 
-std::string
-soundex(std::string const& s, int len = 4) {
-    char *out = (char*)malloc(len + 1); 
-    std::string tmp;
+nw::string
+soundex(nw::string const& s, int len = 4) {
+    char *out = (char*)malloc(len + 1);
+    nw::string tmp;
     tmp.reserve(s.size());
 
     // Remove non-ASCII characters
@@ -66,7 +66,7 @@ soundex(std::string const& s, int len = 4) {
     }
 
     c_soundex(tmp.c_str(), out, len);
-    std::string ret(out);
+    nw::string ret(out);
     free(out);
     return ret;
 }
@@ -108,15 +108,15 @@ namespace _soundex {
             {"Tymczak",	"T520"},
             {"VanDeusen",	"V532"},
             {"Ashcraft",	"A261"},
-            {"XPfizer", "X126"}, 
-            {"XFizer", "X126"}, 
-            {"XSandesh", "X532"}, 
-            {"XSondesh", "X532"}, 
+            {"XPfizer", "X126"},
+            {"XFizer", "X126"},
+            {"XSandesh", "X532"},
+            {"XSondesh", "X532"},
             {0, 0}
         };
 
         init();
-        
+
         puts("  Test name  Code  Got\n----------------------");
         for (i = 0; names[i][0]; i++) {
             c_soundex(names[i][0], sdx, 4);
@@ -125,7 +125,7 @@ namespace _soundex {
             assert(!strcmp(sdx, names[i][1]));
         }
 
-        std::string s1 = "Xwholetthedogsout"; std::string s2 = "Xwholatethedocsout";
+        nw::string s1 = "Xwholetthedogsout"; nw::string s2 = "Xwholatethedocsout";
         printf("soundex(%s, %s) = (%s, %s)\n", s1.c_str(), s2.c_str(), soundex(s1, 7).c_str(), soundex(s2, 7).c_str());
 
         // ltdgst, ltdcst

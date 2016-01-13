@@ -1,18 +1,22 @@
 #if !defined LIBFACE_SEGTREE_HPP
 #define LIBFACE_SEGTREE_HPP
 
-
+#ifdef USE_USTL
+#include <ustl.h>
+namespace nw=ustl;
+#else
 #include <iostream>
 #include <vector>
 #include <utility>
 #include <algorithm>
+namespace nw=std;
+#endif // USE_USTL
 #include <stdio.h>
 #include <assert.h>
 
 #include <include/types.hpp>
 #include <include/utils.hpp>
 
-using namespace std;
 
 
 class SegmentTree {

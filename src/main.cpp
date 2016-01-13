@@ -25,9 +25,15 @@
 #include <include/utils.hpp>
 
 // C++-headers
+#ifdef USE_USTL
+#include <ustl.h>
+namespace nw=ustl;
+#else
 #include <string>
 #include <fstream>
 #include <algorithm>
+namespace nw=std;
+#endif // USE_USTL
 
 #if !defined NMAX
 #define NMAX 32
@@ -45,9 +51,9 @@
 // Undefine the macro below to use C-style I/O routines.
 // #define USE_CXX_IO
 
-typedef std::map<std::string, SuggestGroup> SuggestGroupMap;
-typedef std::map<std::string, SuggestGroup>::const_iterator SuggestGroupConstIterator;
-typedef std::map<std::string, SuggestGroup>::iterator SuggestGroupIterator;
+typedef nw::map<nw::string, SuggestGroup> SuggestGroupMap;
+typedef nw::map<nw::string, SuggestGroup>::const_iterator SuggestGroupConstIterator;
+typedef nw::map<nw::string, SuggestGroup>::iterator SuggestGroupIterator;
 SuggestGroupMap suggest_groups;
 
 char *if_mmap_addr = NULL;      // Pointer to the mmapped area of the file
@@ -99,16 +105,16 @@ struct InputLineParser {
     const char *buff;     // A pointer to the current line to be parsed
     size_t buff_offset;   // Offset of 'buff' [above] relative to the beginning of the file. Used to index into mem_base
     int *pn;              // A pointer to any integral field being parsed
-    std::string *pphrase; // A pointer to a string field being parsed
+    nw::string *pphrase; // A pointer to a string field being parsed
 
     // The input file is mmap()ped in the process' address space.
 
     StringProxy *psnippet_proxy; // The psnippet_proxy is a pointer to a Proxy String object that points to memory in the mmapped region
 
-    InputLineParser(const char *_mem_base, size_t _bo, 
-                    const char *_buff, int *_pn, 
-                    std::string *_pphrase, StringProxy *_psp)
-        : state(ILP_BEFORE_NON_WS), mem_base(_mem_base), buff(_buff), 
+    InputLineParser(const char *_mem_base, size_t _bo,
+                    const char *_buff, int *_pn,
+                    nw::string *_pphrase, StringProxy *_psp)
+        : state(ILP_BEFORE_NON_WS), mem_base(_mem_base), buff(_buff),
           buff_offset(_bo), pn(_pn), pphrase(_pphrase), psnippet_proxy(_psp)
     { }
 
@@ -173,7 +179,7 @@ struct InputLineParser {
                     // Note: Skip to ILP_SNIPPET since the snippet may
                     // start with a white-space that we wish to
                     // preserve.
-                    // 
+                    //
                     this->state = ILP_SNIPPET;
                     s_start = this->buff + i + 1;
                 }
@@ -208,7 +214,7 @@ struct InputLineParser {
     void
     on_snippet(const char *data, int len) {
         if (len && this->psnippet_proxy) {
-            const char *base = this->mem_base + this->buff_offset + 
+            const char *base = this->mem_base + this->buff_offset +
                 (data - this->buff);
             if (base < if_mmap_addr || base + len > if_mmap_addr + if_length) {
                 fprintf(stderr, "base: %p, if_mmap_addr: %p, if_mmap_addr+if_length: %p\n", base, if_mmap_addr, if_mmap_addr + if_length);
@@ -237,6 +243,7 @@ file_size(const char *path) {
     return sbuf.st_size;
 }
 
+/*
 // TODO: Fix for > 2GiB memory usage by using uint64_t
 int
 get_memory_usage(pid_t pid) {
@@ -256,15 +263,16 @@ get_memory_usage(pid_t pid) {
     fclose(pf);
     return r;
 }
+*/
 
 char
 to_lowercase(char c) {
-    return std::tolower(c);
+    return ::tolower(c);
 }
 
 inline void
-str_lowercase(std::string &str) {
-    std::transform(str.begin(), str.end(), 
+str_lowercase(nw::string &str) {
+    nw::transform(str.begin(), str.end(),
                    str.begin(), to_lowercase);
 
 }
@@ -281,14 +289,14 @@ hex2dec(unsigned char ch) {
 
 #undef BOUNDED_RETURN
 
-std::string
-unescape_query(std::string const &query) {
+nw::string
+unescape_query(nw::string const &query) {
     enum {
         QP_DEFAULT = 0,
         QP_ESCAPED1 = 1,
         QP_ESCAPED2 = 2
     };
-    std::string ret;
+    nw::string ret;
     unsigned char echar = 0;
     int state = QP_DEFAULT;
     for (size_t i = 0; i < query.size(); ++i) {
@@ -306,7 +314,7 @@ unescape_query(std::string const &query) {
             echar *= 16;
             echar += hex2dec(query[i]);
             if (state == QP_ESCAPED2) {
-                ret += echar;
+                ret += char(echar);
             }
             state = (state + 1) % 3;
         }
@@ -314,9 +322,9 @@ unescape_query(std::string const &query) {
     return ret;
 }
 
-inline std::string
+inline nw::string
 uint_to_string(uint_t n, uint_t pad = 0) {
-    std::string ret;
+    nw::string ret;
     if (!n) {
         ret = "0";
     }
@@ -334,8 +342,8 @@ uint_to_string(uint_t n, uint_t pad = 0) {
 }
 
 void
-escape_special_chars(std::string& str) {
-    std::string ret;
+escape_special_chars(nw::string& str) {
+    nw::string ret;
     ret.reserve(str.size() + 10);
     for (size_t j = 0; j < str.size(); ++j) {
         switch (str[j]) {
@@ -362,38 +370,38 @@ escape_special_chars(std::string& str) {
     ret.swap(str);
 }
 
-std::string
+nw::string
 rich_suggestions_json_array(vp_t& suggestions) {
-    std::string ret = "[";
+    nw::string ret = "[";
     ret.reserve(OUTPUT_SIZE_RESERVE);
     for (vp_t::iterator i = suggestions.begin(); i != suggestions.end(); ++i) {
         escape_special_chars(i->phrase);
-        std::string snippet = i->snippet;
+        nw::string snippet = i->snippet;
         escape_special_chars(snippet);
 
-        std::string trailer = i + 1 == suggestions.end() ? "\n" : ",\n";
-        ret += " { \"suggestion\": \"" + i->phrase + "\" }" + trailer; 
+        nw::string trailer = i + 1 == suggestions.end() ? "\n" : ",\n";
+        ret += " { \"suggestion\": \"" + i->phrase + "\" }" + trailer;
     }
     ret += "]";
     return ret;
 }
 
-std::string
+nw::string
 suggestions_json_array(vp_t& suggestions) {
-    std::string ret = "[";
+    nw::string ret = "[";
     ret.reserve(OUTPUT_SIZE_RESERVE);
     for (vp_t::iterator i = suggestions.begin(); i != suggestions.end(); ++i) {
         escape_special_chars(i->phrase);
 
-        std::string trailer = i + 1 == suggestions.end() ? "\n" : ",\n";
+        nw::string trailer = i + 1 == suggestions.end() ? "\n" : ",\n";
         ret += "\"" + i->phrase + "\"" + trailer;
     }
     ret += "]";
     return ret;
 }
 
-std::string
-results_json(std::string q, vp_t& suggestions, std::string const& type) {
+nw::string
+results_json(nw::string q, vp_t& suggestions, nw::string const& type) {
     if (type == "list") {
         escape_special_chars(q);
         return "[ \"" + q + "\", " + suggestions_json_array(suggestions) + " ]";
@@ -403,16 +411,16 @@ results_json(std::string q, vp_t& suggestions, std::string const& type) {
     }
 }
 
-std::string
-pluralize(std::string s, int n) {
+nw::string
+pluralize(nw::string s, int n) {
     return n>1 ? s+"s" : s;
 }
 
-std::string
+nw::string
 humanized_time_difference(time_t prev, time_t curr) {
-    std::string ret = "";
+    nw::string ret = "";
     if (prev > curr) {
-        std::swap(prev, curr);
+        nw::swap(prev, curr);
     }
 
     if (prev == curr) {
@@ -447,13 +455,13 @@ humanized_time_difference(time_t prev, time_t curr) {
 }
 
 
-std::string
+nw::string
 get_uptime() {
     return humanized_time_difference(started_at, time(NULL));
 }
 
 bool is_EOF(FILE *pf) { return feof(pf); }
-bool is_EOF(std::ifstream fin) { return !!fin; }
+bool is_EOF(nw::ifstream fin) { return !!fin; }
 
 void get_line(FILE *pf, char *buff, int buff_len, int &read_len) {
     char *got = fgets(buff, INPUT_LINE_SIZE, pf);
@@ -467,19 +475,24 @@ void get_line(FILE *pf, char *buff, int buff_len, int &read_len) {
     }
 }
 
-void get_line(std::ifstream fin, char *buff, int buff_len, int &read_len) {
+void get_line(nw::ifstream fin, char *buff, int buff_len, int &read_len) {
     fin.getline(buff, buff_len);
+#ifdef USE_USTL
+    read_len = fin.eof() ? -1 : strlen(buff);
+    assert(read_len <= INPUT_LINE_SIZE);
+#else
     read_len = fin.gcount();
+#endif // USE_USTL
     buff[INPUT_LINE_SIZE - 1] = '\0';
 }
 
 
 int
-do_import(std::string file, uint_t limit, 
+do_import(nw::string file, uint_t limit,
           int &rnadded, int &rnlines) {
     rnadded = 0;
 #if defined USE_CXX_IO
-    std::ifstream fin(file.c_str());
+    nw::ifstream fin(file.c_str());
 #else
     FILE *fin = fopen(file.c_str(), "r");
 #endif
@@ -498,7 +511,7 @@ do_import(std::string file, uint_t limit,
         int foffset = 0;
 
         if (if_mmap_addr) {
-            int r = munmap(if_mmap_addr, if_length);
+            off_t r = munmap(if_mmap_addr, if_length);
             if (r < 0) {
                 perror("munmap");
                 building = false;
@@ -512,7 +525,7 @@ do_import(std::string file, uint_t limit,
         // mmap() the input file in
         if_mmap_addr = (char*)mmap(NULL, if_length, PROT_READ, MAP_SHARED, fd, 0);
         if (if_mmap_addr == MAP_FAILED) {
-            fprintf(stderr, "length: %llu, fd: %d\n", if_length, fd);
+            fprintf(stderr, "length: %lu, fd: %d\n", if_length, fd);
             perror("mmap");
             if (fin) { fclose(fin); }
             if (fd != -1) { close(fd); }
@@ -521,7 +534,7 @@ do_import(std::string file, uint_t limit,
         }
 
         char buff[INPUT_LINE_SIZE];
-        std::string prev_phrase;
+        nw::string prev_phrase;
 
         while (!is_EOF(fin) && limit--) {
             buff[0] = '\0';
@@ -535,18 +548,18 @@ do_import(std::string file, uint_t limit,
             ++nlines;
 
             int weight = 0;
-            std::string phrase;
+            nw::string phrase;
             StringProxy snippet;
             InputLineParser(if_mmap_addr, foffset, buff, &weight, &phrase, &snippet).start_parsing();
 
-            std::string key = SuggestGroup::parse_key(snippet);
+            nw::string key = SuggestGroup::parse_key(snippet);
             SuggestGroup &sg = suggest_groups[key];
 
             foffset += llen;
 
             if (!phrase.empty()) {
                 str_lowercase(phrase);
-                DCERR("Adding: " << weight << ", " << phrase << ", " << std::string(snippet) << endl);
+                DCERR("Adding: " << weight << ", " << phrase << ", " << nw::string(snippet) << endl);
                 sg.pm.insert(weight, phrase, snippet);
             }
             if (sg.is_input_sorted && prev_phrase <= phrase) {
@@ -573,11 +586,11 @@ do_import(std::string file, uint_t limit,
 }
 
 static void handle_import(client_t *client, parsed_url_t &url) {
-    std::string body;
+    nw::string body;
     headers_t headers;
     headers["Cache-Control"] = "no-cache";
 
-    std::string file = unescape_query(url.query["file"]);
+    nw::string file = unescape_query(url.query["file"]);
     uint_t limit     = atoi(url.query["limit"].c_str());
     int nadded, nlines;
     const time_t start_time = time(NULL);
@@ -607,11 +620,11 @@ static void handle_import(client_t *client, parsed_url_t &url) {
         default:
             body = "Unknown Error";
             write_response(client, 500, "Internal Server Error", headers, body);
-            cerr<<"ERROR::Unknown error: "<<ret<<endl;
+            nw::cerr<<"ERROR::Unknown error: "<<ret<<nw::endl;
         }
     }
     else {
-        std::ostringstream os;
+        nw::ostringstream os;
         os << "Successfully added " << nadded << "/" << nlines
            << "records from '" << file << "' in " << (time(NULL) - start_time)
            << "second(s)\n";
@@ -621,11 +634,11 @@ static void handle_import(client_t *client, parsed_url_t &url) {
 }
 
 static void handle_export(client_t *client, parsed_url_t &url) {
-    std::string body;
+    nw::string body;
     headers_t headers;
     headers["Cache-Control"] = "no-cache";
 
-    std::string file = url.query["file"];
+    nw::string file = url.query["file"];
     if (building) {
         body = "Busy\n";
         write_response(client, 412, "Busy", headers, body);
@@ -634,19 +647,19 @@ static void handle_export(client_t *client, parsed_url_t &url) {
 
     // Prevent modifications to 'pm' while we export
     building = true;
-    ofstream fout(file.c_str());
+    nw::ofstream fout(file.c_str());
     const time_t start_time = time(NULL);
 
     size_t total_records = 0;
     for (SuggestGroupConstIterator it = suggest_groups.begin(); it != suggest_groups.end(); ++it) {
         for (size_t i = 0; i < it->second.pm.repr.size(); ++i) {
-            fout<<it->second.pm.repr[i].weight<<'\t'<<it->second.pm.repr[i].phrase<<'\t'<<std::string(it->second.pm.repr[i].snippet)<<'\n';
+            fout<<it->second.pm.repr[i].weight<<'\t'<<it->second.pm.repr[i].phrase<<'\t'<<nw::string(it->second.pm.repr[i].snippet)<<'\n';
             total_records += it->second.pm.repr.size();
         }
     }
 
     building = false;
-    std::ostringstream os;
+    nw::ostringstream os;
     os << "Successfully wrote " << total_records
        << " records to output file '" << file
        << "' in " << (time(NULL) - start_time) << "second(s)\n";
@@ -656,7 +669,7 @@ static void handle_export(client_t *client, parsed_url_t &url) {
 
 static void handle_suggest(client_t *client, parsed_url_t &url) {
     ++nreq;
-    std::string body;
+    nw::string body;
     headers_t headers;
     headers["Cache-Control"] = "no-cache";
 
@@ -665,11 +678,11 @@ static void handle_suggest(client_t *client, parsed_url_t &url) {
         return;
     }
 
-    std::string q    = unescape_query(url.query["q"]);
-    std::string sn   = url.query["n"];
-    std::string cb   = unescape_query(url.query["callback"]);
-    std::string type = unescape_query(url.query["type"]);
-    std::string cc   = unescape_query(url.query["countryCode"]);
+    nw::string q    = unescape_query(url.query["q"]);
+    nw::string sn   = url.query["n"];
+    nw::string cb   = unescape_query(url.query["callback"]);
+    nw::string type = unescape_query(url.query["type"]);
+    nw::string cc   = unescape_query(url.query["countryCode"]);
 
     DCERR("handle_suggest::q:"<<q<<", sn:"<<sn<<", callback: "<<cb<<endl);
 
@@ -684,7 +697,7 @@ static void handle_suggest(client_t *client, parsed_url_t &url) {
     /*
       get the right group of suggestions
     */
-    std::string group_key = SuggestGroup::build_key(cc);
+    nw::string group_key = SuggestGroup::build_key(cc);
     if (group_key.empty()) group_key = DEFAULT_SUGGEST_GROUP_KEY;
     SuggestGroup &sg = suggest_groups.count(group_key) > 0 ? suggest_groups[group_key] : suggest_groups[EMPTY_SUGGEST_GROUP_KEY];
 
@@ -712,7 +725,7 @@ static void handle_stats(client_t *client, parsed_url_t &url) {
     headers_t headers;
     headers["Cache-Control"] = "no-cache";
 
-    std::string body;
+    nw::string body;
     char buff[2048];
     char *b = buff;
     b += sprintf(b, "Answered %lu queries\n", nreq);
@@ -728,7 +741,11 @@ static void handle_stats(client_t *client, parsed_url_t &url) {
         }
         b += sprintf(b, "Data store size: %d entries\n", total_entries);
     }
-    b += sprintf(b, "Memory usage: %d MiB\n", get_memory_usage(getpid())/1024);
+    //b += sprintf(b, "Memory usage: %d MiB\n", get_memory_usage(getpid())/1024);
+    size_t rss=0;
+    uv_resident_set_memory(&rss);
+    b += sprintf(b, "Memory usage: %zu MiB\n", rss/1024);
+
     body = buff;
     write_response(client, 200, "OK", headers, body);
 }
@@ -736,8 +753,9 @@ static void handle_stats(client_t *client, parsed_url_t &url) {
 static void handle_invalid_request(client_t *client, parsed_url_t &url) {
     headers_t headers;
     headers["Cache-Control"] = "no-cache";
+    headers["Content-Type"] = "text/plain; charset=UTF-8";
 
-    std::string body = "Sorry, but the page you requested could not be found\n";
+    nw::string body = "Sorry, but the page you requested could not be found\n";
     write_response(client, 404, "Not Found", headers, body);
 }
 
@@ -745,7 +763,7 @@ static void handle_invalid_request(client_t *client, parsed_url_t &url) {
 void serve_request(client_t *client) {
     parsed_url_t url;
     parse_URL(client->url, url);
-    std::string &request_uri = url.path;
+    nw::string &request_uri = url.path;
     DCERR("request_uri: " << request_uri << endl);
 
     if (request_uri == "/face/suggest/") {
@@ -817,11 +835,11 @@ parse_options(int argc, char *argv[]) {
 
         case 'l':
             line_limit = atoi(optarg);
-            DCERR("Limit # of lines to: " << line_limit << endl);
+            DCERR("Limit # of lines to: " << line_limit << nw::endl);
             break;
 
         case '?':
-            cerr<<"ERROR::Invalid option: "<<optopt<<endl;
+            nw::cerr<<"ERROR::Invalid option: "<<optopt<<nw::endl;
             break;
         }
     }
@@ -840,7 +858,7 @@ main(int argc, char* argv[]) {
 
     started_at = time(NULL);
 
-    cerr<<"INFO::Starting lib-face on port '"<<port<<"'\n";
+    nw::cerr<<"INFO::Starting lib-face on port '"<<port<<"'\n";
 
     if (ac_file) {
         int nadded, nlines;
@@ -861,12 +879,12 @@ main(int argc, char* argv[]) {
                 break;
 
             default:
-                cerr<<"ERROR::Unknown error: "<<ret<<endl;
+                nw::cerr<<"ERROR::Unknown error: "<<ret<<nw::endl;
             }
             return 1;
         }
         else {
-            fprintf(stderr, "INFO::Successfully added %d/%d records from \"%s\" in %d second(s)\n", 
+            fprintf(stderr, "INFO::Successfully added %d/%d records from \"%s\" in %d second(s)\n",
                     nadded, nlines, ac_file, (int)(time(NULL) - start_time));
         }
     }

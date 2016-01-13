@@ -2,17 +2,21 @@
 #if !defined LIBFACE_SPARSETABLE_HPP
 #define LIBFACE_SPARSETABLE_HPP
 
+#ifdef USE_USTL
+#include <ustl.h>
+namespace nw=ustl;
+#else
 #include <iostream>
 #include <vector>
 #include <utility>
 #include <algorithm>
+namespace nw=std;
+#endif // USE_USTL
 #include <stdio.h>
 #include <assert.h>
 
 #include <include/types.hpp>
 #include <include/utils.hpp>
-
-using namespace std;
 
 
 class SparseTable {
@@ -97,10 +101,10 @@ public:
     pui_t
     query_max(uint_t qf, uint_t ql) {
         if (qf >= this->len || ql >= this->len || ql < qf) {
-            return make_pair(minus_one, minus_one);
+            return nw::make_pair(minus_one, minus_one);
         }
 
-        const int rlen = ql - qf + 1;
+        const uint_t rlen = ql - qf + 1;
         const size_t ti = log2(rlen);
         const size_t f = qf, l = ql + 1 - (1 << ti);
 
@@ -109,10 +113,10 @@ public:
 	const uint_t data2 = data[this->repr[ti][l]];
 
         if (data1 > data2) {
-            return std::make_pair(data1, this->repr[ti][f]);
+            return nw::make_pair(data1, this->repr[ti][f]);
         }
         else {
-            return std::make_pair(data2, this->repr[ti][l]);
+            return nw::make_pair(data2, this->repr[ti][l]);
         }
     }
 

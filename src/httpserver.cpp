@@ -3,8 +3,14 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#ifdef USE_USTL
+#include <ustl.h>
+namespace nw=ustl;
+#else
 #include <string>
 #include <algorithm>
+namespace nw=std;
+#endif // USE_USTL
 
 #define CHECK(r, msg)                                           \
     if (r) {                                                    \
@@ -22,9 +28,9 @@ static uv_loop_t* uv_loop;                          // UV-event-loop pointer
 static uv_tcp_t server;                             // Global TCP server
 static http_parser_settings parser_settings;        // Global parser settings
 static request_callback_t request_callback = NULL;  // The global request callback to invoke
-static std::list<client_t*> connected_clients;      // The LRU list of connected clients. Front of the list is the least recently active client connection
+static nw::list<client_t*> connected_clients;      // The LRU list of connected clients. Front of the list is the least recently active client connection
 static size_t nconnected_clients = 0;               // The # of currently connected clients
-static std::list<client_t*> empty_list;             // Used to move nodes around in O(1) time by move_to_back()
+static nw::list<client_t*> empty_list;             // Used to move nodes around in O(1) time by move_to_back()
 
 enum {
     HTTP_PARSER_CONTINUE_PARSING = 0,
@@ -33,25 +39,25 @@ enum {
 
 // Move element pointed to by 'iter' to the end of the list
 // 'l'. 'iter' MUST be a member of 'l'.
-void move_to_back(std::list<client_t*> &l, std::list<client_t*>::iterator iter) {
+void move_to_back(nw::list<client_t*> &l, nw::list<client_t*>::iterator iter) {
     assert(empty_list.empty());
     assert(!l.empty());
     empty_list.splice(empty_list.end(), l, iter);
     l.splice(l.end(), empty_list, empty_list.begin());
 }
 
-void build_HTTP_response_header(std::string &response_header,
+void build_HTTP_response_header(nw::string &response_header,
                                 int http_major, int http_minor,
                                 int status_code, const char *status_str,
                                 headers_t &headers,
-                                std::string const &body) {
+                                nw::string const &body) {
     response_header.clear();
-    std::ostringstream os;
+    nw::ostringstream os;
     char buff[2048];
     // Ensure that status_str is small enough that everything fits in under 2048 bytes.
     sprintf(buff, "HTTP/%d.%d %d %s\r\n", http_major, http_minor, status_code, status_str);
     os<<buff;
-    sprintf(buff, "%u", body.size());
+    sprintf(buff, "%zu", body.size());
     headers["Content-Length"] = buff;
     headers["Access-Control-Allow-Origin"] = "*";
     for (headers_t::iterator i = headers.begin();
@@ -66,9 +72,9 @@ void write_response(client_t *client,
                     int status_code,
                     const char *status_str,
                     headers_t &headers,
-                    std::string &body) {
+                    nw::string &body) {
     assert(client->resstrs.empty());
-    std::string header_str;
+    nw::string header_str;
     const int http_major = client->parser.http_major;
     const int http_minor = client->parser.http_minor;
     if (http_should_keep_alive(&client->parser)) {
@@ -242,13 +248,13 @@ void after_write(uv_write_t* req, int status) {
     }
 }
 
-void parse_query_string(std::string &qstr, query_strings_t &query) {
-    std::string key, value;
-  int pos = 0;
+void parse_query_string(nw::string &qstr, query_strings_t &query) {
+    nw::string key, value;
+  size_t pos = 0;
 
-  std::string old = "+";
-  std::string rep= "%20";
-  while ((pos = qstr.find(old, pos)) != std::string::npos) {
+  nw::string old = "+";
+  nw::string rep= "%20";
+  while ((pos = qstr.find(old, pos)) != nw::string::npos) {
       qstr.replace(pos, old.length(), rep);
           pos += rep.length();
   }
@@ -276,7 +282,7 @@ void parse_query_string(std::string &qstr, query_strings_t &query) {
     }
 }
 
-void parse_URL(std::string const &url_str, parsed_url_t &uout) {
+void parse_URL(nw::string const &url_str, parsed_url_t &uout) {
     struct http_parser_url url;
     http_parser_parse_url(url_str.c_str(), url_str.size(), 0, &url);
 
@@ -289,14 +295,14 @@ void parse_URL(std::string const &url_str, parsed_url_t &uout) {
     if (url.field_set & (1<<UF_QUERY)) {
         int foff = url.field_data[UF_QUERY].off;
         int flen = url.field_data[UF_QUERY].len;
-        std::string qstr(url_str.c_str() + foff, flen);
+        nw::string qstr(url_str.c_str() + foff, flen);
         parse_query_string(qstr, uout.query);
     }
 }
 
 int on_url(http_parser *parser, const char *data, size_t len) {
     client_t* client = (client_t*) parser->data;
-    DPRINTF("Adding '%s' to URL\n", std::string(data, len).c_str());
+    DPRINTF("Adding '%s' to URL\n", nw::string(data, len).c_str());
     client->url.append(data, len);
     DPRINTF("URL is now: %s\n", client->url.c_str());
     if (client->url.size() > MAX_URL_SIZE) {

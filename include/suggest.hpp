@@ -1,19 +1,23 @@
 #if !defined LIBFACE_SUGGEST_HPP
 #define LIBFACE_SUGGEST_HPP
 
+#ifdef USE_USTL
+#include <ustl.h>
+namespace nw=ustl;
+#else
 #include <iostream>
 #include <vector>
 #include <utility>
 #include <algorithm>
 #include <string>
 #include <queue>
+namespace nw=std;
+#endif // USE_USTL
 #include <stdio.h>
 #include <assert.h>
 
 #include <include/utils.hpp>
 #include <include/types.hpp>
-
-using namespace std;
 
 
 struct PhraseRange {
@@ -36,7 +40,7 @@ struct PhraseRange {
     }
 };
 
-typedef std::priority_queue<PhraseRange> pqpr_t;
+typedef nw::priority_queue<PhraseRange> pqpr_t;
 
 #define DEFAULT_SUGGEST_GROUP_KEY "__default__"
 #define EMPTY_SUGGEST_GROUP_KEY "__empty__"
@@ -61,13 +65,13 @@ struct SuggestGroup {
         return weights.size();
     }
 
-    static std::vector<std::string>
-    split(std::string const& str, char delim) {
-        std::vector<std::string> elems;
-        std::stringstream ss(str);
-        std::string elem;
+    static nw::vector<nw::string>
+    split(nw::string const& str, char delim) {
+        nw::vector<nw::string> elems;
+        nw::istringstream ss(str);
+        nw::string elem;
 
-        while (std::getline(ss, elem, delim)) {
+        while (nw::getline(ss, elem, delim)) {
             elems.push_back(elem);
         }
         return elems;
@@ -86,13 +90,13 @@ struct SuggestGroup {
      *
      * If input is empty, output key will be DEFAULT_SUGGEST_GROUP_KEY
      */
-    static std::string
-    parse_key(std::string const& group_namespace) {
-        std::vector<std::string> elems = split(group_namespace, ',');
+    static nw::string
+    parse_key(nw::string const& group_namespace) {
+        nw::vector<nw::string> elems = split(group_namespace, ',');
 
-        std::string group_key;
+        nw::string group_key;
         for (size_t i = 0; i < elems.size(); ++i) {
-            std::vector<std::string> kv = split(elems[i], ':');
+            nw::vector<nw::string> kv = split(elems[i], ':');
             assert(2 == kv.size());
 
             group_key.append(kv[1]);
@@ -105,8 +109,8 @@ struct SuggestGroup {
         return group_key;
     }
 
-    static std::string
-    build_key(std::string const& countryCode) {
+    static nw::string
+    build_key(nw::string const& countryCode) {
         if (!countryCode.empty()) {
             return countryCode + ":";
         }
@@ -119,19 +123,19 @@ struct SuggestGroup {
 namespace _suggest_group {
     int
     test() {
-        std::string result0 = SuggestGroup::parse_key("k1:v1");
+        nw::string result0 = SuggestGroup::parse_key("k1:v1");
         assert("v1:" == result0);
 
-        std::string result1 = SuggestGroup::parse_key("k1:v1,k2:v2,k3:v3");
+        nw::string result1 = SuggestGroup::parse_key("k1:v1,k2:v2,k3:v3");
         assert("v1:v2:v3:" == result1);
 
-        std::string result2 = SuggestGroup::parse_key("");
+        nw::string result2 = SuggestGroup::parse_key("");
         assert("__default__" == result2);
 
-        std::string result3 = SuggestGroup::build_key("v1");
+        nw::string result3 = SuggestGroup::build_key("v1");
         assert("v1:" == result3);
 
-        std::string result4 = SuggestGroup::build_key("");
+        nw::string result4 = SuggestGroup::build_key("");
         assert("" == result4);
 
         return 0;
@@ -139,9 +143,9 @@ namespace _suggest_group {
 }
 
 vp_t
-suggest(PhraseMap &pm, RMQ &st, std::string prefix, uint_t n = 16) {
+suggest(PhraseMap &pm, RMQ &st, nw::string prefix, uint_t n = 16) {
     pvpi_t phrases = pm.query(prefix);
-    // cerr<<"Got "<<phrases.second - phrases.first<<" candidate phrases from PhraseMap"<<endl;
+    // cerr<<"Got "<<phrases.second - phrases.first<<" candidate phrases from PhraseMap"<<nw::endl;
 
     uint_t first = phrases.first  - pm.repr.begin();
     uint_t last  = phrases.second - pm.repr.begin();
@@ -160,8 +164,8 @@ suggest(PhraseMap &pm, RMQ &st, std::string prefix, uint_t n = 16) {
     while (ret.size() < n && !heap.empty()) {
         PhraseRange pr = heap.top();
         heap.pop();
-        // cerr<<"Top phrase is at index: "<<pr.index<<endl;
-        // cerr<<"And is: "<<pm.repr[pr.index].first<<endl;
+        // cerr<<"Top phrase is at index: "<<pr.index<<nw::endl;
+        // cerr<<"And is: "<<pm.repr[pr.index].first<<nw::endl;
 
         ret.push_back(pm.repr[pr.index]);
 
@@ -170,7 +174,7 @@ suggest(PhraseMap &pm, RMQ &st, std::string prefix, uint_t n = 16) {
 
         // Prevent underflow
         if (pr.index - 1 < pr.index && lower <= upper) {
-            // cerr<<"[1] adding to heap: "<<lower<<", "<<upper<<", "<<best.first<<", "<<best.second<<endl;
+            // cerr<<"[1] adding to heap: "<<lower<<", "<<upper<<", "<<best.first<<", "<<best.second<<nw::endl;
 
             best = st.query_max(lower, upper);
             heap.push(PhraseRange(lower, upper, best.first, best.second));
@@ -181,7 +185,7 @@ suggest(PhraseMap &pm, RMQ &st, std::string prefix, uint_t n = 16) {
 
         // Prevent overflow
         if (pr.index + 1 > pr.index && lower <= upper) {
-            // cerr<<"[2] adding to heap: "<<lower<<", "<<upper<<", "<<best.first<<", "<<best.second<<endl;
+            // cerr<<"[2] adding to heap: "<<lower<<", "<<upper<<", "<<best.first<<", "<<best.second<<nw::endl;
 
             best = st.query_max(lower, upper);
             heap.push(PhraseRange(lower, upper, best.first, best.second));
@@ -192,9 +196,9 @@ suggest(PhraseMap &pm, RMQ &st, std::string prefix, uint_t n = 16) {
 }
 
 vp_t
-naive_suggest(PhraseMap& pm, RMQ& st, std::string prefix, uint_t n = 16) {
+naive_suggest(PhraseMap& pm, RMQ& st, nw::string prefix, uint_t n = 16) {
     pvpi_t phrases = pm.query(prefix);
-    std::vector<uint_t> indexes;
+    nw::vector<uint_t> indexes;
     vp_t ret;
 
     while (phrases.first != phrases.second) {
@@ -239,34 +243,35 @@ namespace _suggest {
         }
 
         st.initialize(weights);
+#ifndef USE_USTL
+        nw::cout<<"\n";
+        nw::cout<<"suggest(\"d\"):\n"<<suggest(pm, st, "d")<<nw::endl;
+        nw::cout<<"naive_suggest(\"d\"):\n"<<naive_suggest(pm, st, "d")<<nw::endl;
 
-        cout<<"\n";
-        cout<<"suggest(\"d\"):\n"<<suggest(pm, st, "d")<<endl;
-        cout<<"naive_suggest(\"d\"):\n"<<naive_suggest(pm, st, "d")<<endl;
+        nw::cout<<"\n";
+        nw::cout<<"suggest(\"a\"):\n"<<suggest(pm, st, "a")<<nw::endl;
+        nw::cout<<"naive_suggest(\"a\"):\n"<<naive_suggest(pm, st, "a")<<nw::endl;
 
-        cout<<"\n";
-        cout<<"suggest(\"a\"):\n"<<suggest(pm, st, "a")<<endl;
-        cout<<"naive_suggest(\"a\"):\n"<<naive_suggest(pm, st, "a")<<endl;
+        nw::cout<<"\n";
+        nw::cout<<"suggest(\"b\"):\n"<<suggest(pm, st, "b")<<nw::endl;
+        nw::cout<<"naive_suggest(\"b\"):\n"<<naive_suggest(pm, st, "b")<<nw::endl;
 
-        cout<<"\n";
-        cout<<"suggest(\"b\"):\n"<<suggest(pm, st, "b")<<endl;
-        cout<<"naive_suggest(\"b\"):\n"<<naive_suggest(pm, st, "b")<<endl;
+        nw::cout<<"\n";
+        nw::cout<<"suggest(\"duck\"):\n"<<suggest(pm, st, "duck")<<nw::endl;
+        nw::cout<<"naive_suggest(\"duck\"):\n"<<naive_suggest(pm, st, "duck")<<nw::endl;
 
-        cout<<"\n";
-        cout<<"suggest(\"duck\"):\n"<<suggest(pm, st, "duck")<<endl;
-        cout<<"naive_suggest(\"duck\"):\n"<<naive_suggest(pm, st, "duck")<<endl;
+        nw::cout<<"\n";
+        nw::cout<<"suggest(\"k\"):\n"<<suggest(pm, st, "k")<<nw::endl;
+        nw::cout<<"naive_suggest(\"k\"):\n"<<naive_suggest(pm, st, "k")<<nw::endl;
 
-        cout<<"\n";
-        cout<<"suggest(\"k\"):\n"<<suggest(pm, st, "k")<<endl;
-        cout<<"naive_suggest(\"k\"):\n"<<naive_suggest(pm, st, "k")<<endl;
+        nw::cout<<"\n";
+        nw::cout<<"suggest(\"ka\"):\n"<<suggest(pm, st, "ka")<<nw::endl;
+        nw::cout<<"naive_suggest(\"ka\"):\n"<<naive_suggest(pm, st, "ka")<<nw::endl;
 
-        cout<<"\n";
-        cout<<"suggest(\"ka\"):\n"<<suggest(pm, st, "ka")<<endl;
-        cout<<"naive_suggest(\"ka\"):\n"<<naive_suggest(pm, st, "ka")<<endl;
-
-        cout<<"\n";
-        cout<<"suggest(\"c\"):\n"<<suggest(pm, st, "c")<<endl;
-        cout<<"naive_suggest(\"c\"):\n"<<naive_suggest(pm, st, "c")<<endl;
+        nw::cout<<"\n";
+        nw::cout<<"suggest(\"c\"):\n"<<suggest(pm, st, "c")<<nw::endl;
+        nw::cout<<"naive_suggest(\"c\"):\n"<<naive_suggest(pm, st, "c")<<nw::endl;
+#endif // USE_USTL
 
         return 0;
     }

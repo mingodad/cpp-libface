@@ -1,23 +1,28 @@
 #if !defined LIBFACE_PHRASE_MAP_HPP
 #define LIBFACE_PHRASE_MAP_HPP
 
+#ifdef USE_USTL
+#include <ustl.h>
+namespace nw=ustl;
+#else
 #include <iostream>
 #include <vector>
 #include <utility>
 #include <algorithm>
 #include <string>
+namespace nw=std;
+#endif // USE_USTL
+
 #include <stdio.h>
 #include <assert.h>
 
 #include <include/types.hpp>
 
-using namespace std;
-
 
 
 struct PrefixFinder {
     bool
-    operator()(std::string const& prefix, phrase_t const &target) {
+    operator()(nw::string const& prefix, phrase_t const &target) {
 #if 1
         const int ppos = target.phrase.compare(0, prefix.size(), prefix);
         return ppos > 0;
@@ -31,7 +36,7 @@ struct PrefixFinder {
     }
 
     bool
-    operator()(phrase_t const& target, std::string const &prefix) {
+    operator()(phrase_t const& target, nw::string const &prefix) {
 #if 1
         const int ppos = target.phrase.compare(0, prefix.size(), prefix);
         return ppos < 0;
@@ -55,20 +60,20 @@ public:
     }
 
     void
-    insert(uint_t weight, std::string const& p, StringProxy const& s) {
+    insert(uint_t weight, nw::string const& p, StringProxy const& s) {
         this->repr.push_back(phrase_t(weight, p, s));
     }
 
     void
     finalize(int sorted = 0) {
         if (!sorted) {
-            std::sort(this->repr.begin(), this->repr.end());
+            nw::sort(this->repr.begin(), this->repr.end());
         }
     }
 
     pvpi_t
-    query(std::string const &prefix) {
-        return std::equal_range(this->repr.begin(), this->repr.end(), 
+    query(nw::string const &prefix) {
+        return nw::equal_range(this->repr.begin(), this->repr.end(),
                                 prefix, PrefixFinder());
     }
 
@@ -76,7 +81,7 @@ public:
 
 
 pvpi_t
-naive_query(PhraseMap &pm, std::string prefix) {
+naive_query(PhraseMap &pm, nw::string prefix) {
     vpi_t f = pm.repr.begin(), l = pm.repr.begin();
     while (f != pm.repr.end() && f->phrase.substr(0, prefix.size()) < prefix) {
         ++f;
@@ -85,16 +90,16 @@ naive_query(PhraseMap &pm, std::string prefix) {
     while (l != pm.repr.end() && l->phrase.substr(0, prefix.size()) == prefix) {
         ++l;
     }
-    return std::make_pair(f, l);
+    return nw::make_pair(f, l);
 }
 
 void
-show_indexes(PhraseMap &pm, std::string prefix) {
+show_indexes(PhraseMap &pm, nw::string prefix) {
     pvpi_t nq = naive_query(pm, prefix);
     pvpi_t q  = pm.query(prefix);
 
-    cout<<"naive[first] = "<<nq.first - pm.repr.begin()<<", naive[last] = "<<nq.second - pm.repr.begin()<<endl;
-    cout<<"phmap[first] = "<<q.first - pm.repr.begin()<<", phmap[last] = "<<q.second - pm.repr.begin()<<endl;
+    nw::cout<<"naive[first] = "<<nq.first - pm.repr.begin()<<", naive[last] = "<<nq.second - pm.repr.begin()<<nw::endl;
+    nw::cout<<"phmap[first] = "<<q.first - pm.repr.begin()<<", phmap[last] = "<<q.second - pm.repr.begin()<<nw::endl;
 }
 
 

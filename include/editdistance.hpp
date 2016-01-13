@@ -5,7 +5,7 @@
 #include <time.h>
 
 int
-edit_distance(std::string const& lhs, std::string const& rhs) {
+edit_distance(nw::string const& lhs, nw::string const& rhs) {
     const int n = lhs.size();
     const int m = rhs.size();
     int *mem = (int*)malloc((m + m + 2) * sizeof(int));
@@ -30,7 +30,7 @@ edit_distance(std::string const& lhs, std::string const& rhs) {
                 dp1[j] = m1;
             }
         }
-        std::swap(dp0, dp1);
+        nw::swap(dp0, dp1);
     }
     int ret = dp0[m-1];
     free(mem);
@@ -43,7 +43,7 @@ namespace editdistance {
         printf("Testing edit_distance implementation\n");
         printf("------------------------------------\n");
 
-        std::string s1, s2;
+        nw::string s1, s2;
         s1 = "duckduckgo"; s2 = "duckduckgoose";
         cerr<<"Edit Distance("<<s1<<", "<<s2<<"): "<<edit_distance(s1, s2)<<endl;
         assert(edit_distance(s1, s2) == 3);

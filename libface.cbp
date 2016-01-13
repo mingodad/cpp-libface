@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="libface" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="libface" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option parameters="-f post_codes.tsv" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="libface" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+					<Add option="-DNDEBUG=1" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-std=c++11" />
+			<Add option="-Wall" />
+			<Add option="-fexceptions" />
+			<Add option="-DUSE_USTL=1" />
+			<Add option="-D_GNU_SOURCE=1" />
+			<Add option="-D_LARGEFILE_SOURCE=1" />
+			<Add option="-D_FILE_OFFSET_BITS=64" />
+			<Add directory="deps/http-parser" />
+			<Add directory="deps/libuv/include" />
+			<Add directory="deps/libuv/include/uv-private" />
+			<Add directory="deps/libuv/src" />
+			<Add directory="deps/libuv" />
+			<Add directory="." />
+			<Add directory="deps" />
+			<Add directory="../../../../local/include" />
+		</Compiler>
+		<Linker>
+			<Add library="dl" />
+			<Add library="pthread" />
+			<Add library="ustl" />
+			<Add directory="../../../../local/lib" />
+		</Linker>
+		<Unit filename="deps/http-parser/http_parser.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="deps/http-parser/http_parser.h" />
+		<Unit filename="deps/libuv/include/uv-private/ngx-queue.h" />
+		<Unit filename="deps/libuv/include/uv-private/stdint-msvc2008.h" />
+		<Unit filename="deps/libuv/include/uv-private/tree.h" />
+		<Unit filename="deps/libuv/include/uv-private/uv-bsd.h" />
+		<Unit filename="deps/libuv/include/uv-private/uv-darwin.h" />
+		<Unit filename="deps/libuv/include/uv-private/uv-linux.h" />
+		<Unit filename="deps/libuv/include/uv-private/uv-sunos.h" />
+		<Unit filename="deps/libuv/include/uv-private/uv-unix.h" />
+		<Unit filename="deps/libuv/include/uv-private/uv-win.h" />
+		<Unit filename="deps/libuv/include/uv.h" />
+		<Unit filename="deps/libuv/src/fs-poll.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="deps/libuv/src/inet.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="deps/libuv/src/unix/async.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="deps/libuv/src/unix/core.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="deps/libuv/src/unix/dl.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="deps/libuv/src/unix/error.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="deps/libuv/src/unix/fs.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="deps/libuv/src/unix/getaddrinfo.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="deps/libuv/src/unix/internal.h" />
+		<Unit filename="deps/libuv/src/unix/linux/inotify.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="deps/libuv/src/unix/linux/linux-core.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="deps/libuv/src/unix/linux/syscalls.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="deps/libuv/src/unix/linux/syscalls.h" />
+		<Unit filename="deps/libuv/src/unix/loop-watcher.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="deps/libuv/src/unix/loop.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="deps/libuv/src/unix/pipe.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="deps/libuv/src/unix/poll.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="deps/libuv/src/unix/process.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="deps/libuv/src/unix/signal.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="deps/libuv/src/unix/stream.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="deps/libuv/src/unix/tcp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="deps/libuv/src/unix/thread.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="deps/libuv/src/unix/threadpool.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="deps/libuv/src/unix/timer.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="deps/libuv/src/unix/tty.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="deps/libuv/src/unix/udp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="deps/libuv/src/uv-common.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="deps/libuv/src/uv-common.h" />
+		<Unit filename="include/benderrmq.hpp" />
+		<Unit filename="include/editdistance.hpp" />
+		<Unit filename="include/httpserver.hpp" />
+		<Unit filename="include/phrase_map.hpp" />
+		<Unit filename="include/segtree.hpp" />
+		<Unit filename="include/soundex.hpp" />
+		<Unit filename="include/sparsetable.hpp" />
+		<Unit filename="include/suggest.hpp" />
+		<Unit filename="include/types.hpp" />
+		<Unit filename="include/utils.hpp" />
+		<Unit filename="src/httpserver.cpp" />
+		<Unit filename="src/main.cpp" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<lib_finder disable_auto="1" />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
