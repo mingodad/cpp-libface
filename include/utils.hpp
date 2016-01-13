@@ -43,8 +43,8 @@ const uint_t minus_one = (uint_t)0 - 1;
 
 template <typename T>
 #ifdef USE_USTL
-nw::ofstream&
-operator<<(nw::ofstream& out, nw::vector<T> const& vec) {
+nw::ostringstream&
+operator<<(nw::ostringstream& out, nw::vector<T> const& vec) {
 #else
 nw::ostream&
 operator<<(nw::ostream& out, nw::vector<T> const& vec) {
@@ -57,8 +57,8 @@ operator<<(nw::ostream& out, nw::vector<T> const& vec) {
 
 template <typename T, typename U>
 #ifdef USE_USTL
-nw::ofstream&
-operator<<(nw::ofstream& out, nw::pair<T, U> const& p) {
+nw::ostringstream&
+operator<<(nw::ostringstream& out, nw::pair<T, U> const& p) {
 #else
 nw::ostream&
 operator<<(nw::ostream& out, nw::pair<T, U> const& p) {
@@ -68,8 +68,8 @@ operator<<(nw::ostream& out, nw::pair<T, U> const& p) {
 }
 
 #ifdef USE_USTL
-inline nw::ofstream&
-operator<<(nw::ofstream& out, phrase_t const& p) {
+inline nw::ostringstream&
+operator<<(nw::ostringstream& out, phrase_t const& p) {
 #else
 inline nw::ostream&
 operator<<(nw::ostream& out, phrase_t const& p) {
