@@ -314,6 +314,20 @@ int on_url(http_parser *parser, const char *data, size_t len) {
     return HTTP_PARSER_CONTINUE_PARSING;
 }
 
+int on_header_field(http_parser *parser, const char *data, size_t len) {
+    client_t* client = (client_t*) parser->data;
+    client->last_header_field = nw::string(data, len);
+    return HTTP_PARSER_CONTINUE_PARSING;
+}
+
+int on_header_value(http_parser *parser, const char *data, size_t len) {
+    client_t* client = (client_t*) parser->data;
+    nw::string value = nw::string(data, len);
+    DPRINTF("Adding '%s:%s' to HEADERS\n", client->last_header_field.c_str(), value.c_str());
+    client->req_headers[client->last_header_field] = value;
+    return HTTP_PARSER_CONTINUE_PARSING;
+}
+
 int on_message_complete(http_parser* parser) {
     client_t* client = (client_t*) parser->data;
 
@@ -352,6 +366,8 @@ int httpserver_start(request_callback_t rcb, const char *ip, int port) {
 
     parser_settings.on_message_complete = on_message_complete;
     parser_settings.on_url              = on_url;
+    parser_settings.on_header_field     = on_header_field;
+    parser_settings.on_header_value     = on_header_value;
 
     MAX_OPEN_FDS = get_max_open_fds();
     MAX_CONNECTED_CLIENTS = (MAX_OPEN_FDS > 10 ? MAX_OPEN_FDS - 10 : MAX_OPEN_FDS);

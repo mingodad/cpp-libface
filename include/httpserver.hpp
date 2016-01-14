@@ -37,6 +37,8 @@ struct client_t {
     nw::vector<partial_buf_t>     unparsed_data;
     nw::list<client_t*>::iterator cciter;
     nw::string                    url;
+    nw::string                    last_header_field;
+    headers_t                     req_headers;
 
     client_t() { }
 };
@@ -66,6 +68,8 @@ void after_write(uv_write_t* req, int status);
 void parse_query_string(nw::string &qstr, query_strings_t &query);
 void parse_URL(nw::string const &url_str, parsed_url_t &uout);
 int on_url(http_parser *parser, const char *data, size_t len);
+int on_header_field(http_parser *parser, const char *data, size_t len);
+int on_header_value(http_parser *parser, const char *data, size_t len);
 int on_message_complete(http_parser* parser);
 int httpserver_start(request_callback_t rcb, const char *ip, int port);
 

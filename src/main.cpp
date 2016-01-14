@@ -314,7 +314,7 @@ unescape_query(nw::string const &query) {
             echar *= 16;
             echar += hex2dec(query[i]);
             if (state == QP_ESCAPED2) {
-                ret += char(echar);
+                ret += echar;
             }
             state = (state + 1) % 3;
         }
@@ -477,12 +477,7 @@ void get_line(FILE *pf, char *buff, int buff_len, int &read_len) {
 
 void get_line(nw::ifstream fin, char *buff, int buff_len, int &read_len) {
     fin.getline(buff, buff_len);
-#ifdef USE_USTL
-    read_len = fin.eof() ? -1 : strlen(buff);
-    assert(read_len <= INPUT_LINE_SIZE);
-#else
     read_len = fin.gcount();
-#endif // USE_USTL
     buff[INPUT_LINE_SIZE - 1] = '\0';
 }
 
@@ -759,6 +754,20 @@ static void handle_invalid_request(client_t *client, parsed_url_t &url) {
     write_response(client, 404, "Not Found", headers, body);
 }
 
+static void handle_echo_request(client_t *client, parsed_url_t &url) {
+    headers_t headers;
+    headers["Cache-Control"] = "no-cache";
+    headers["Content-Type"] = "text/plain; charset=UTF-8";
+
+    nw::string body;
+    for (headers_t::iterator it = client->req_headers.begin(); it != client->req_headers.end(); ++it)
+    {
+        body += it->first + ": " + it->second + "\n";
+    }
+
+    write_response(client, 404, "Not Found", headers, body);
+}
+
 
 void serve_request(client_t *client) {
     parsed_url_t url;
@@ -777,6 +786,9 @@ void serve_request(client_t *client) {
     }
     else if (request_uri == "/face/stats/") {
         handle_stats(client, url);
+    }
+    else if (request_uri == "/face/echo/") {
+        handle_echo_request(client, url);
     }
     else {
         handle_invalid_request(client, url);
